@@ -71,6 +71,13 @@ aside {
   border-radius: 8px;
   background: #fff;
   touch-action: none; /* 👆 prevent scrolling during touch drawing */
+
+  /* === FIX #1: ASPECT RATIO === */
+  width: 800px;
+  height: 500px;
+  max-width: 100%;
+  aspect-ratio: 800 / 500;
+  /* === END OF FIX #1 === */
 }
 
 #overlay {
@@ -78,6 +85,21 @@ aside {
   inset: 16px;
   pointer-events: none;
 }
+
+/* === FIX #2: CURSOR OVERLAY SCALING === */
+/*
+  This forces the dynamically-created cursor canvas
+  (which lives inside #overlay) to fill the overlay,
+  ensuring it scales perfectly with the main #canvas.
+*/
+#overlay canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+/* === END OF FIX #2 === */
 
 #userList {
   list-style: none;
@@ -165,4 +187,3 @@ button.active {
     padding: 8px;
   }
 }
-utton.active { background:#111827; color:#fff; }

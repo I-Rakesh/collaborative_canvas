@@ -65,8 +65,24 @@ export class CanvasRenderer {
         clientY = e.clientY;
       }
 
-      const x = ((clientX - rect.left) * this.canvas.width) / rect.width;
-      const y = ((clientY - rect.top) * this.canvas.height) / rect.height;
+      const styles = getComputedStyle(this.canvas);
+      const borderLeftWidth = parseFloat(styles.borderLeftWidth);
+      const borderTopWidth = parseFloat(styles.borderTopWidth);
+
+      // Calculate position relative to the *content area* (inside the border)
+      const relativeX = clientX - rect.left - borderLeftWidth;
+      const relativeY = clientY - rect.top - borderTopWidth;
+
+      // Get the *content* dimensions (excluding border)
+      // This is the CSS-scaled size of the drawable area
+      const contentWidth = this.canvas.clientWidth;
+      const contentHeight = this.canvas.clientHeight;
+
+      // Scale based on content dimensions
+      // (relativeX / cssContentWidth) * bitmapWidth
+      const x = (relativeX * this.canvas.width) / contentWidth;
+      const y = (relativeY * this.canvas.height) / contentHeight;
+
       return { x, y };
     };
 
