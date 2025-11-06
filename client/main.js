@@ -7,6 +7,7 @@ const el = (id) => document.getElementById(id);
 // UI elements
 const canvas = el("canvas");
 const overlay = el("overlay");
+const joinOverlay = el("joinOverlay"); // 🔒 added overlay element
 const userList = el("userList");
 const colorPicker = el("colorPicker");
 const brushSize = el("brushSize");
@@ -25,6 +26,11 @@ const ws = new WSClient();
 
 let me = null;
 let users = [];
+let isJoined = false; // 🔒 lock flag
+
+// Initially lock drawing
+canvas.style.pointerEvents = "none";
+overlay.style.pointerEvents = "none";
 
 // ==== UI Logic ====
 colorPicker.addEventListener("input", () =>
@@ -44,27 +50,59 @@ eraserTool.addEventListener("click", () => {
   renderer.setTool("eraser");
 });
 
-undoBtn.addEventListener("click", () => ws.undo());
-redoBtn.addEventListener("click", () => ws.redo());
-clearBtn.addEventListener("click", () => ws.clear());
+undoBtn.addEventListener("click", () => {
+  if (!isJoined) return alert("Join a room first!");
+  ws.undo();
+});
+redoBtn.addEventListener("click", () => {
+  if (!isJoined) return alert("Join a room first!");
+  ws.redo();
+});
+clearBtn.addEventListener("click", () => {
+  if (!isJoined) return alert("Join a room first!");
+  ws.clear();
+});
 
+// === Join button ===
 joinBtn.addEventListener("click", () => {
   const username = usernameEl.value.trim() || "Anonymous";
-  const roomId = roomIdEl.value.trim() || "lobby";
+  const roomId = roomIdEl.value.trim();
+
+  if (!roomId) {
+    alert("⚠️ Please enter a Room ID before joining!");
+    return;
+  }
+
   ws.join(roomId, username);
 });
 
 // ==== Renderer → WebSocket ====
-renderer.onCursor = ({ x, y }) => ws.sendCursor(x, y);
-renderer.onStart = (payload) => ws.startStroke(payload);
-renderer.onPoint = (payload) => ws.sendPoint(payload);
-renderer.onEnd = (payload) => ws.endStroke(payload);
-renderer.onCommit = (op) => ws.commitOp(op);
+renderer.onCursor = ({ x, y }) => {
+  if (isJoined) ws.sendCursor(x, y);
+};
+renderer.onStart = (payload) => {
+  if (isJoined) ws.startStroke(payload);
+};
+renderer.onPoint = (payload) => {
+  if (isJoined) ws.sendPoint(payload);
+};
+renderer.onEnd = (payload) => {
+  if (isJoined) ws.endStroke(payload);
+};
+renderer.onCommit = (op) => {
+  if (isJoined) ws.commitOp(op);
+};
 
 // ==== WebSocket → Renderer ====
 ws.on("joined", ({ user, users: initialUsers, ops }) => {
   me = user;
   users = initialUsers;
+  isJoined = true;
+
+  // 🔓 Unlock drawing
+  canvas.style.pointerEvents = "auto";
+  overlay.style.pointerEvents = "none";
+  joinOverlay.classList.add("hidden");
 
   // ✅ clear all old cursors when joining new room
   renderer.cursors.clear();
@@ -89,7 +127,6 @@ ws.on("joined", ({ user, users: initialUsers, ops }) => {
 
 // ✅ when user list updates (join/leave)
 ws.on("users:update", (list) => {
-  // Re-sync user list
   const previous = new Set(users.map((u) => u.id));
   const next = new Set(list.map((u) => u.id));
 
@@ -100,7 +137,6 @@ ws.on("users:update", (list) => {
     }
   }
 
-  // update user list and UI
   users = list;
   refreshUserList();
 });
@@ -144,6 +180,12 @@ ws.on("op:commit", (op) => {
 
 ws.on("ops:snapshot", (ops) => renderer.rebuildFromOps(ops));
 
+// ✅ Handle join errors from server
+ws.on("error", (data) => {
+  alert(data.message || "Failed to join room");
+});
+
+// ==== Helper ====
 function refreshUserList() {
   userList.innerHTML = users
     .map(
@@ -155,5 +197,5 @@ function refreshUserList() {
 
 // Auto join
 window.addEventListener("load", () => {
-  ws.join("lobby", "Guest");
+  joinOverlay.classList.remove("hidden");
 });

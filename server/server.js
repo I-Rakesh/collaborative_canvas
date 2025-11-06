@@ -27,7 +27,13 @@ io.on("connection", (socket) => {
 
   // When a user joins a room
   socket.on("join", ({ roomId, username }) => {
-    currentRoomId = roomId || "lobby";
+    // 🚫 Prevent joining without room ID
+    if (!roomId || roomId.trim() === "") {
+      socket.emit("error", { message: "Room ID is required to join." });
+      return;
+    }
+
+    currentRoomId = roomId.trim();
     user = rooms.addUser(currentRoomId, socket.id, username);
     socket.join(currentRoomId);
 

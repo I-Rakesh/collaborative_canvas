@@ -11,7 +11,7 @@
     <h1>🎨 Real-Time Collaborative Canvas</h1>
     <div class="room">
       <input id="username" placeholder="Your name" />
-      <input id="roomId" placeholder="Room ID" value="lobby" />
+      <input id="roomId" placeholder="Enter Room ID to Join" />
       <button id="joinBtn">Join</button>
     </div>
   </header>
@@ -23,23 +23,34 @@
 
       <h3>Tools</h3>
       <div class="tools">
-        <label>Color <input type="color" id="colorPicker" value="#000000" /></label>
-        <label>Size <input type="range" id="brushSize" min="1" max="32" value="5" /></label>
+          <label>
+            Color
+            <input type="color" id="colorPicker" value="#000000" />
+          </label>
+          <label>
+            Size
+            <input type="range" id="brushSize" min="1" max="32" value="5" />
+          </label>
         <div class="buttons">
           <button id="brushTool" class="active">Brush</button>
           <button id="eraserTool">Eraser</button>
           <button id="undoBtn">Undo</button>
           <button id="redoBtn">Redo</button>
           <button id="clearBtn">Clear</button>
+          </div>
         </div>
-      </div>
     </aside>
 
     <section class="stage">
       <canvas id="canvas" width="800" height="500"></canvas>
       <div id="overlay"></div>
-    </section>
-  </main>
+
+        <!-- 🔒 Overlay that locks drawing before joining -->
+        <div id="joinOverlay" class="lock-screen">
+          Join a room to start drawing
+        </div>
+      </section>
+    </main>
 
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="main.js"></script>
