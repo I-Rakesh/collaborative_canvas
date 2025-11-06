@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collaborative Canvas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>🎨 Real-Time Collaborative Canvas</h1>
+    <div class="room">
+      <input id="username" placeholder="Your name" />
+      <input id="roomId" placeholder="Room ID" value="lobby" />
+      <button id="joinBtn">Join</button>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <h3>Users</h3>
+      <ul id="userList"></ul>
+
+      <h3>Tools</h3>
+      <div class="tools">
+        <label>Color <input type="color" id="colorPicker" value="#000000" /></label>
+        <label>Size <input type="range" id="brushSize" min="1" max="32" value="5" /></label>
+        <div class="buttons">
+          <button id="brushTool" class="active">Brush</button>
+          <button id="eraserTool">Eraser</button>
+          <button id="undoBtn">Undo</button>
+          <button id="redoBtn">Redo</button>
+          <button id="clearBtn">Clear</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <canvas id="canvas" width="800" height="500"></canvas>
+      <div id="overlay"></div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
