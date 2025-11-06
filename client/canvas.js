@@ -55,24 +55,62 @@ export class CanvasRenderer {
   _bindPointer() {
     const getXY = (e) => {
       const rect = this.canvas.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) * this.canvas.width) / rect.width;
-      const y = ((e.clientY - rect.top) * this.canvas.height) / rect.height;
+      let clientX, clientY;
+
+      if (e.touches && e.touches[0]) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const x = ((clientX - rect.left) * this.canvas.width) / rect.width;
+      const y = ((clientY - rect.top) * this.canvas.height) / rect.height;
       return { x, y };
     };
 
     const onMove = (e) => {
+      e.preventDefault();
       const { x, y } = getXY(e);
       if (this.onCursor) this.onCursor({ x, y });
       if (!this.drawing) return;
 
       this.localPoints.push({ x, y });
-      // Local preview (brush/eraser)
       this._drawSegment(this.ctx, this.localPoints, this.currentTool);
-
       if (this.onPoint) this.onPoint({ strokeId: this.localStrokeId, x, y });
     };
 
+    const onUp = (e) => {
+      e.preventDefault();
+      this.drawing = false;
+
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onMove);
+
+      if (this.onEnd) this.onEnd({ strokeId: this.localStrokeId });
+
+      if (this.localPoints.length > 1 && this.onCommit) {
+        this.onCommit({
+          type: "stroke",
+          opId: `op_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          mode: this.currentTool === "eraser" ? "erase" : "draw",
+          color: this.color,
+          width: this.size,
+          points: this.localPoints,
+        });
+      }
+
+      this._drawSegment(this.baseCtx, this.localPoints, this.currentTool);
+      this._blitBase();
+
+      this.localPoints = [];
+      this.localStrokeId = null;
+    };
+
+    // === Mouse events ===
     this.canvas.addEventListener("mousedown", (e) => {
+      e.preventDefault();
       this.drawing = true;
       const { x, y } = getXY(e);
       this.localStrokeId = `s_${Math.random().toString(36).slice(2)}`;
@@ -85,38 +123,34 @@ export class CanvasRenderer {
           width: this.size,
           mode: this.currentTool === "eraser" ? "erase" : "draw",
           x,
-          y, // important for remote users
+          y,
         });
 
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp, { once: true });
     });
 
-    const onUp = () => {
-      this.drawing = false;
-      window.removeEventListener("mousemove", onMove);
+    // === Touch events ===
+    this.canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      this.drawing = true;
+      const { x, y } = getXY(e);
+      this.localStrokeId = `s_${Math.random().toString(36).slice(2)}`;
+      this.localPoints = [{ x, y }];
 
-      if (this.onEnd) this.onEnd({ strokeId: this.localStrokeId });
-
-      // Commit final stroke
-      if (this.localPoints.length > 1 && this.onCommit) {
-        this.onCommit({
-          type: "stroke",
-          opId: `op_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-          mode: this.currentTool === "eraser" ? "erase" : "draw",
+      if (this.onStart)
+        this.onStart({
+          strokeId: this.localStrokeId,
           color: this.color,
           width: this.size,
-          points: this.localPoints,
+          mode: this.currentTool === "eraser" ? "erase" : "draw",
+          x,
+          y,
         });
-      }
 
-      // Draw stroke permanently into base layer
-      this._drawSegment(this.baseCtx, this.localPoints, this.currentTool);
-      this._blitBase();
-
-      this.localPoints = [];
-      this.localStrokeId = null;
-    };
+      window.addEventListener("touchmove", onMove, { passive: false });
+      window.addEventListener("touchend", onUp, { once: true });
+    });
   }
 
   // ==== core drawing logic ====
