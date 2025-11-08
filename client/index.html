@@ -2,57 +2,140 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Collaborative Canvas</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>🎨 Real-Time Collaborative Canvas</h1>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🎨</div>
+      <h1 class="app-title">Real-Time Collaborative Canvas</h1>
+    </div>
+
     <div class="room">
-      <input id="username" placeholder="Your name" />
-      <input id="roomId" placeholder="Enter Room ID to Join" />
-      <button id="joinBtn">Join</button>
+      <input id="username" class="input" placeholder="Your name" />
+      <input id="roomId" class="input" placeholder="Enter Room ID to Join" />
+      <button id="joinBtn" class="btn primary">Join</button>
+      <button id="sidebarToggle" class="btn ghost" aria-label="Toggle sidebar" title="Tools & users">
+        ☰
+      </button>
     </div>
   </header>
 
-  <main>
-    <aside>
-      <h3>Users</h3>
-      <ul id="userList"></ul>
+  <main class="layout">
+    <!-- Sidebar (collapsible) -->
+    <aside class="sidebar" id="sidebar" aria-hidden="false">
+      <div class="panel">
+        <h3 class="panel-title">Users</h3>
+        <ul id="userList" class="user-list" aria-live="polite"></ul>
+      </div>
 
-      <h3>Tools</h3>
-      <div class="tools">
-          <label>
-            Color
+      <div class="panel">
+        <h3 class="panel-title">Tools</h3>
+        <div class="tools">
+          <label class="tool-row">
+            <span class="tool-label">Color</span>
             <input type="color" id="colorPicker" value="#000000" />
           </label>
-          <label>
-            Size
+
+          <label class="tool-row">
+            <span class="tool-label">Size</span>
             <input type="range" id="brushSize" min="1" max="32" value="5" />
           </label>
-        <div class="buttons">
-          <button id="brushTool" class="active">Brush</button>
-          <button id="eraserTool">Eraser</button>
-          <button id="undoBtn">Undo</button>
-          <button id="redoBtn">Redo</button>
-          <button id="clearBtn">Clear</button>
+
+          <div class="tool-buttons">
+            <button id="brushTool" class="btn active">Brush</button>
+            <button id="eraserTool" class="btn">Eraser</button>
+          </div>
+
+          <div class="tool-grid">
+            <button id="undoBtn" class="btn pastel lavender">Undo</button>
+            <button id="redoBtn" class="btn pastel baby-blue">Redo</button>
+            <button id="clearBtn" class="btn pastel peach">Clear</button>
           </div>
         </div>
+      </div>
+
+      <div class="panel small">
+        <p class="muted">Tip: on mobile tap the <strong>☰</strong> button to open tools</p>
+      </div>
     </aside>
 
+    <!-- Stage -->
     <section class="stage">
-      <canvas id="canvas" width="800" height="500"></canvas>
-      <div id="overlay"></div>
+      <div class="canvas-wrap">
+        <canvas id="canvas" width="800" height="500"></canvas>
+        <div id="overlay" class="overlay"></div>
 
-        <!-- 🔒 Overlay that locks drawing before joining -->
+        <!-- join overlay (keeps same id so JS works) -->
         <div id="joinOverlay" class="lock-screen">
           Join a room to start drawing
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating toggle for small screens -->
+  <button id="floatingToggle" class="floating-toggle" aria-label="Open tools">☰</button>
 
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="main.js"></script>
+
+  <script>
+    // UI: toggle sidebar behavior (keeps JS IDs intact)
+    (function () {
+      const sidebar = document.getElementById("sidebar");
+      const toggle = document.getElementById("sidebarToggle");
+      const floating = document.getElementById("floatingToggle");
+
+      function openSidebar() {
+        sidebar.classList.add("open");
+        sidebar.setAttribute("aria-hidden", "false");
+      }
+      function closeSidebar() {
+        sidebar.classList.remove("open");
+        sidebar.setAttribute("aria-hidden", "true");
+      }
+      function toggleSidebar() {
+        sidebar.classList.toggle("open");
+        const hidden = sidebar.classList.contains("open") ? "false" : "true";
+        sidebar.setAttribute("aria-hidden", hidden);
+      }
+
+      toggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggleSidebar();
+      });
+
+      floating.addEventListener("click", (e) => {
+        e.preventDefault();
+        openSidebar();
+      });
+
+      // close sidebar when clicking outside on small screens
+      document.addEventListener("click", (e) => {
+        if (!sidebar.classList.contains("open")) return;
+        if (window.matchMedia("(min-width: 769px)").matches) return;
+        const inside = sidebar.contains(e.target) || e.target.id === "floatingToggle";
+        const isToggle = e.target.id === "sidebarToggle";
+        if (!inside && !isToggle) closeSidebar();
+      });
+
+      // ensure correct initial ARIA state based on width
+      const mq = window.matchMedia("(min-width: 769px)");
+      function onWidthChange() {
+        if (mq.matches) {
+          sidebar.classList.add("open");
+          sidebar.setAttribute("aria-hidden", "false");
+        } else {
+          sidebar.classList.remove("open");
+          sidebar.setAttribute("aria-hidden", "true");
+        }
+      }
+      onWidthChange();
+      mq.addEventListener("change", onWidthChange);
+    })();
+  </script>
 </body>
 </html>
