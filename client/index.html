@@ -24,7 +24,7 @@
   </header>
 
   <main class="layout">
-    <!-- Sidebar (collapsible) -->
+
     <aside class="sidebar" id="sidebar" aria-hidden="false">
       <div class="panel">
         <h3 class="panel-title">Users</h3>
@@ -62,13 +62,13 @@
       </div>
     </aside>
 
-    <!-- Stage -->
+
     <section class="stage">
       <div class="canvas-wrap">
         <canvas id="canvas" width="800" height="500"></canvas>
         <div id="overlay" class="overlay"></div>
 
-        <!-- join overlay (keeps same id so JS works) -->
+
         <div id="joinOverlay" class="lock-screen">
           Join a room to start drawing
         </div>
@@ -76,14 +76,14 @@
     </section>
   </main>
 
-  <!-- Floating toggle for small screens -->
+
   <button id="floatingToggle" class="floating-toggle" aria-label="Open tools">☰</button>
 
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="main.js"></script>
 
   <script>
-    // UI: toggle sidebar behavior (keeps JS IDs intact)
+
     (function () {
       const sidebar = document.getElementById("sidebar");
       const toggle = document.getElementById("sidebarToggle");
@@ -113,7 +113,7 @@
         openSidebar();
       });
 
-      // close sidebar when clicking outside on small screens
+
       document.addEventListener("click", (e) => {
         if (!sidebar.classList.contains("open")) return;
         if (window.matchMedia("(min-width: 769px)").matches) return;
@@ -122,7 +122,7 @@
         if (!inside && !isToggle) closeSidebar();
       });
 
-      // ensure correct initial ARIA state based on width
+
       const mq = window.matchMedia("(min-width: 769px)");
       function onWidthChange() {
         if (mq.matches) {

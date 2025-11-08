@@ -1,7 +1,4 @@
-// client/canvas.js
-
 export class CanvasRenderer {
-  // ==== event hooks (defined for TS/JS intellisense) ====
   onCursor = null;
   onStart = null;
   onPoint = null;
@@ -17,30 +14,26 @@ export class CanvasRenderer {
     this.color = "#000000";
     this.size = 5;
 
-    // Base canvas stores all confirmed operations
     this.base = document.createElement("canvas");
     this.base.width = this.canvas.width;
     this.base.height = this.canvas.height;
     this.baseCtx = this.base.getContext("2d");
 
-    // Cursor overlay (shows other users’ cursors)
     this.cursorLayer = document.createElement("canvas");
     this.cursorLayer.width = this.canvas.width;
     this.cursorLayer.height = this.canvas.height;
     this.cursorCtx = this.cursorLayer.getContext("2d");
     this.overlay.appendChild(this.cursorLayer);
 
-    // State for local + remote strokes
     this.localPoints = [];
     this.localStrokeId = null;
-    this.liveStrokes = new Map(); // strokeId -> {lastX, lastY, color, width, mode}
-    this.cursors = new Map(); // userId -> {x,y,color,name}
+    this.liveStrokes = new Map();
+    this.cursors = new Map();
 
     this._bindPointer();
     this._renderLoop();
   }
 
-  // ==== basic settings ====
   setTool(tool) {
     this.currentTool = tool;
   }
@@ -51,7 +44,6 @@ export class CanvasRenderer {
     this.size = +px;
   }
 
-  // ==== handle mouse input ====
   _bindPointer() {
     const getXY = (e) => {
       const rect = this.canvas.getBoundingClientRect();
@@ -69,17 +61,12 @@ export class CanvasRenderer {
       const borderLeftWidth = parseFloat(styles.borderLeftWidth);
       const borderTopWidth = parseFloat(styles.borderTopWidth);
 
-      // Calculate position relative to the *content area* (inside the border)
       const relativeX = clientX - rect.left - borderLeftWidth;
       const relativeY = clientY - rect.top - borderTopWidth;
 
-      // Get the *content* dimensions (excluding border)
-      // This is the CSS-scaled size of the drawable area
       const contentWidth = this.canvas.clientWidth;
       const contentHeight = this.canvas.clientHeight;
 
-      // Scale based on content dimensions
-      // (relativeX / cssContentWidth) * bitmapWidth
       const x = (relativeX * this.canvas.width) / contentWidth;
       const y = (relativeY * this.canvas.height) / contentHeight;
 
@@ -124,7 +111,6 @@ export class CanvasRenderer {
       this.localStrokeId = null;
     };
 
-    // === Mouse events ===
     this.canvas.addEventListener("mousedown", (e) => {
       e.preventDefault();
       this.drawing = true;
@@ -146,7 +132,6 @@ export class CanvasRenderer {
       window.addEventListener("mouseup", onUp, { once: true });
     });
 
-    // === Touch events ===
     this.canvas.addEventListener("touchstart", (e) => {
       e.preventDefault();
       this.drawing = true;
@@ -169,7 +154,6 @@ export class CanvasRenderer {
     });
   }
 
-  // ==== core drawing logic ====
   _drawSegment(ctx, points, toolMode) {
     if (points.length < 2) return;
     const erase = toolMode === "eraser";
@@ -181,7 +165,6 @@ export class CanvasRenderer {
     ctx.strokeStyle = erase ? "rgba(0,0,0,1)" : this.color;
     ctx.globalCompositeOperation = erase ? "destination-out" : "source-over";
 
-    // draw only the newest line segment
     const a = points[points.length - 2];
     const b = points[points.length - 1];
     ctx.beginPath();
@@ -192,7 +175,6 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
-  // ==== rebuild full canvas from server ops (undo/redo/new join) ====
   rebuildFromOps(ops) {
     this.baseCtx.clearRect(0, 0, this.base.width, this.base.height);
     for (const op of ops) {
@@ -220,14 +202,12 @@ export class CanvasRenderer {
     this._blitBase();
   }
 
-  // ==== sync visible canvas with base ====
   _blitBase() {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.drawImage(this.base, 0, 0);
   }
 
-  // ==== remote live stroke preview (other users) ====
   remoteStart({ strokeId, color, width, mode, x, y }) {
     this.liveStrokes.set(strokeId, { lastX: x, lastY: y, color, width, mode });
   }
@@ -259,12 +239,10 @@ export class CanvasRenderer {
     this.liveStrokes.delete(strokeId);
   }
 
-  // ==== cursor overlay (other users’ pointers) ====
   updateCursor(user) {
     this.cursors.set(user.userId, user);
   }
 
-  // ==== continuous rendering loop for cursors ====
   _renderLoop() {
     const drawCursors = () => {
       this.cursorCtx.clearRect(

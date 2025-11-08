@@ -1,13 +1,11 @@
-// client/main.js
 import { CanvasRenderer } from "./canvas.js";
 import { WSClient } from "./websocket.js";
 
 const el = (id) => document.getElementById(id);
 
-// UI elements
 const canvas = el("canvas");
 const overlay = el("overlay");
-const joinOverlay = el("joinOverlay"); // 🔒 added overlay element
+const joinOverlay = el("joinOverlay");
 const userList = el("userList");
 const colorPicker = el("colorPicker");
 const brushSize = el("brushSize");
@@ -20,19 +18,16 @@ const usernameEl = el("username");
 const roomIdEl = el("roomId");
 const joinBtn = el("joinBtn");
 
-// Core instances
 const renderer = new CanvasRenderer(canvas, overlay);
 const ws = new WSClient();
 
 let me = null;
 let users = [];
-let isJoined = false; // 🔒 lock flag
+let isJoined = false;
 
-// Initially lock drawing
 canvas.style.pointerEvents = "none";
 overlay.style.pointerEvents = "none";
 
-// ==== UI Logic ====
 colorPicker.addEventListener("input", () =>
   renderer.setColor(colorPicker.value),
 );
@@ -63,7 +58,6 @@ clearBtn.addEventListener("click", () => {
   ws.clear();
 });
 
-// === Join button ===
 joinBtn.addEventListener("click", () => {
   const username = usernameEl.value.trim() || "Anonymous";
   const roomId = roomIdEl.value.trim();
@@ -76,7 +70,6 @@ joinBtn.addEventListener("click", () => {
   ws.join(roomId, username);
 });
 
-// ==== Renderer → WebSocket ====
 renderer.onCursor = ({ x, y }) => {
   if (isJoined) ws.sendCursor(x, y);
 };
@@ -93,23 +86,19 @@ renderer.onCommit = (op) => {
   if (isJoined) ws.commitOp(op);
 };
 
-// ==== WebSocket → Renderer ====
 ws.on("joined", ({ user, users: initialUsers, ops }) => {
   me = user;
   users = initialUsers;
   isJoined = true;
 
-  // 🔓 Unlock drawing
   canvas.style.pointerEvents = "auto";
   overlay.style.pointerEvents = "none";
   joinOverlay.classList.add("hidden");
 
   document.body.classList.add("joined");
 
-  // ✅ clear all old cursors when joining new room
   renderer.cursors.clear();
 
-  // ✅ create placeholder cursors for all other users
   for (const u of users) {
     if (u.id !== me.id) {
       renderer.cursors.set(u.id, {
@@ -127,12 +116,10 @@ ws.on("joined", ({ user, users: initialUsers, ops }) => {
   renderer.rebuildFromOps(ops);
 });
 
-// ✅ when user list updates (join/leave)
 ws.on("users:update", (list) => {
   const previous = new Set(users.map((u) => u.id));
   const next = new Set(list.map((u) => u.id));
 
-  // remove stale cursors
   for (const oldId of previous) {
     if (!next.has(oldId)) {
       renderer.cursors.delete(oldId);
@@ -143,15 +130,13 @@ ws.on("users:update", (list) => {
   refreshUserList();
 });
 
-// ✅ handle user leaving explicitly (remove their cursor)
 ws.on("user:left", ({ userId }) => {
   renderer.cursors.delete(userId);
 });
 
-// ✅ handle cursor updates safely (prevents ghost cursors)
 ws.on("cursor", ({ userId, x, y }) => {
   const u = users.find((u) => u.id === userId);
-  if (!u) return; // ignore if the user left before the update arrived
+  if (!u) return;
   renderer.updateCursor({ userId, x, y, color: u.color, name: u.name });
 });
 
@@ -182,12 +167,10 @@ ws.on("op:commit", (op) => {
 
 ws.on("ops:snapshot", (ops) => renderer.rebuildFromOps(ops));
 
-// ✅ Handle join errors from server
 ws.on("error", (data) => {
   alert(data.message || "Failed to join room");
 });
 
-// ==== Helper ====
 function refreshUserList() {
   userList.innerHTML = users
     .map(
@@ -197,7 +180,6 @@ function refreshUserList() {
     .join("");
 }
 
-// Auto join
 window.addEventListener("load", () => {
   joinOverlay.classList.remove("hidden");
 });

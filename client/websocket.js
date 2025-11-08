@@ -1,4 +1,3 @@
-// client/websocket.js
 export class WSClient {
   constructor() {
     this.socket = io();

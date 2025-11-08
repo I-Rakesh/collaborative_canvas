@@ -1,4 +1,3 @@
-// server/server.js
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -25,9 +24,7 @@ io.on("connection", (socket) => {
   let currentRoomId = null;
   let user = null;
 
-  // When a user joins a room
   socket.on("join", ({ roomId, username }) => {
-    // 🚫 Prevent joining without room ID
     if (!roomId || roomId.trim() === "") {
       socket.emit("error", { message: "Room ID is required to join." });
       return;
@@ -37,7 +34,6 @@ io.on("connection", (socket) => {
     user = rooms.addUser(currentRoomId, socket.id, username);
     socket.join(currentRoomId);
 
-    // Send snapshot to the new user
     const snapshot = rooms.getState(currentRoomId).getSnapshot();
     socket.emit("joined", {
       roomId: currentRoomId,
@@ -47,16 +43,13 @@ io.on("connection", (socket) => {
       canvasSize: snapshot.canvasSize,
     });
 
-    // ✅ Notify all users in the room (including the new one)
     io.to(currentRoomId).emit("users:update", rooms.getUsers(currentRoomId));
 
-    // ✅ Re-sync full canvas state to everyone in the room
     const state = rooms.getState(currentRoomId);
     const snap = state.getSnapshot();
     io.to(currentRoomId).emit("ops:snapshot", snap.ops);
   });
 
-  // Handle cursor updates
   socket.on("cursor", (data) => {
     if (!currentRoomId || !user) return;
     socket.to(currentRoomId).emit("cursor", {
@@ -66,7 +59,6 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Handle live stroke drawing events
   socket.on("stroke:start", ({ strokeId, color, width, mode }) => {
     if (!currentRoomId || !user) return;
     socket.to(currentRoomId).emit("stroke:start", {
@@ -93,7 +85,6 @@ io.on("connection", (socket) => {
     socket.to(currentRoomId).emit("stroke:end", { userId: user.id, strokeId });
   });
 
-  // Handle committed operations
   socket.on("op:commit", (op) => {
     if (!currentRoomId || !user) return;
     const state = rooms.getState(currentRoomId);
@@ -104,11 +95,9 @@ io.on("connection", (socket) => {
     });
     if (!committed) return;
 
-    // ✅ Broadcast new operation to all users (not just others)
     io.to(currentRoomId).emit("op:commit", committed);
   });
 
-  // ✅ Global undo (broadcast to all)
   socket.on("op:undo", () => {
     if (!currentRoomId) return;
     const state = rooms.getState(currentRoomId);
@@ -117,7 +106,6 @@ io.on("connection", (socket) => {
     io.to(currentRoomId).emit("ops:snapshot", snapshot.ops);
   });
 
-  // ✅ Global redo (broadcast to all)
   socket.on("op:redo", () => {
     if (!currentRoomId) return;
     const state = rooms.getState(currentRoomId);
@@ -126,7 +114,6 @@ io.on("connection", (socket) => {
     io.to(currentRoomId).emit("ops:snapshot", snapshot.ops);
   });
 
-  // ✅ Clear canvas (broadcast to all)
   socket.on("canvas:clear", () => {
     if (!currentRoomId) return;
     const state = rooms.getState(currentRoomId);
@@ -134,16 +121,11 @@ io.on("connection", (socket) => {
     io.to(currentRoomId).emit("ops:snapshot", state.getSnapshot().ops);
   });
 
-  // Handle disconnects
   socket.on("disconnect", () => {
     if (currentRoomId) {
-      const userList = rooms.getUsers(currentRoomId);
-      const leftUser = userList.find((u) => u.id === socket.id);
-
       rooms.removeUser(currentRoomId, socket.id);
       io.to(currentRoomId).emit("users:update", rooms.getUsers(currentRoomId));
 
-      // ✅ notify others to remove this user's cursor
       io.to(currentRoomId).emit("user:left", { userId: socket.id });
     }
   });

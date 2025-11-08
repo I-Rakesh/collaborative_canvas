@@ -1,4 +1,3 @@
-// server/rooms.js
 import { DrawingState } from "./drawing_state.js";
 
 const USER_COLORS = [
@@ -26,7 +25,7 @@ const USER_COLORS = [
 
 export class Rooms {
   constructor() {
-    this.rooms = new Map(); // roomId -> { users: Map, state: DrawingState, colorIndex }
+    this.rooms = new Map();
   }
 
   ensure(roomId) {

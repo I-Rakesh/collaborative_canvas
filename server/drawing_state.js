@@ -1,13 +1,9 @@
-// server/drawing-state.js
-// Maintains authoritative history of operations for a room.
-// Operation types: 'stroke' with { points: [{x,y}], color, width, mode: 'draw'|'erase', userId, opId }
-
 let NEXT_ID = 1;
 
 export class DrawingState {
   constructor() {
-    this.ops = []; // committed operations (for replay)
-    this.redoStack = []; // for redo
+    this.ops = [];
+    this.redoStack = [];
     this.canvasSize = { width: 800, height: 500 };
   }
 
