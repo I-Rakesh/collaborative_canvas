@@ -1,4 +1,3 @@
-````markdown
 # 🎨 Real-Time Collaborative Canvas
 
 A **real-time multi-user drawing application** built using **Vanilla JavaScript**, **HTML5 Canvas**, and **Node.js + Socket.io**.
@@ -59,7 +58,6 @@ Users can draw together on the same canvas with smooth synchronization, undo/red
 git clone https://github.com/<your-username>/collaborative_canvas.git
 cd collaborative_canvas
 ```
-````
 
 ### 2️⃣ Install Dependencies
 

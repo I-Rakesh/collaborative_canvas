@@ -1,4 +1,3 @@
-```markdown
 # 🧱 ARCHITECTURE.md
 
 ## 🎯 Overview
@@ -11,9 +10,7 @@ Each client maintains a live rendering of the global drawing state, synchronized
 ## 🗺️ Data Flow Diagram
 
 Below is the conceptual flow of data between users, the client, and the server:
-```
 
-```
     ┌──────────────────┐
     │      User A      │
     │ (Browser Client) │
@@ -54,9 +51,6 @@ Below is the conceptual flow of data between users, the client, and the server:
     │   User B, User C │
     │ (Other Clients)  │
     └──────────────────┘
-```
-
-````
 
 ---
 
@@ -64,21 +58,21 @@ Below is the conceptual flow of data between users, the client, and the server:
 
 The app communicates entirely through **Socket.io** events.
 
-| Event | Direction | Description |
-|--------|------------|-------------|
-| `join` | Client → Server | Join a room with `{roomId, username}` |
-| `joined` | Server → Client | Confirmation + user list + current ops |
-| `users:update` | Server → All | Notify everyone when user list changes |
-| `cursor` | Bidirectional | Send real-time cursor coordinates |
-| `stroke:start` | Client → Others | User starts drawing a stroke |
-| `stroke:point` | Client → Others | User moves pointer while drawing |
-| `stroke:end` | Client → Others | User finishes the stroke |
-| `op:commit` | Client → All | Commit final stroke to history |
-| `op:undo` | Client → All | Trigger global undo |
-| `op:redo` | Client → All | Trigger global redo |
-| `canvas:clear` | Client → All | Clear the canvas for everyone |
-| `ops:snapshot` | Server → All | Send full state snapshot (used after undo/redo/clear) |
-| `user:left` | Server → All | Remove disconnected user’s cursor |
+| Event          | Direction       | Description                                           |
+| -------------- | --------------- | ----------------------------------------------------- |
+| `join`         | Client → Server | Join a room with `{roomId, username}`                 |
+| `joined`       | Server → Client | Confirmation + user list + current ops                |
+| `users:update` | Server → All    | Notify everyone when user list changes                |
+| `cursor`       | Bidirectional   | Send real-time cursor coordinates                     |
+| `stroke:start` | Client → Others | User starts drawing a stroke                          |
+| `stroke:point` | Client → Others | User moves pointer while drawing                      |
+| `stroke:end`   | Client → Others | User finishes the stroke                              |
+| `op:commit`    | Client → All    | Commit final stroke to history                        |
+| `op:undo`      | Client → All    | Trigger global undo                                   |
+| `op:redo`      | Client → All    | Trigger global redo                                   |
+| `canvas:clear` | Client → All    | Clear the canvas for everyone                         |
+| `ops:snapshot` | Server → All    | Send full state snapshot (used after undo/redo/clear) |
+| `user:left`    | Server → All    | Remove disconnected user’s cursor                     |
 
 **All real-time synchronization** is achieved via these message types.
 Every drawing action is represented as an **operation object**:
@@ -93,7 +87,7 @@ Every drawing action is represented as an **operation object**:
   points: [{x, y}, {x, y}, ...],
   userId: "socketId"
 }
-````
+```
 
 ---
 

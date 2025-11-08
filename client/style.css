@@ -56,7 +56,7 @@ body {
 .topbar {
   width:100%;
   max-width:var(--max-width);
-  height:var(--header-height);
+  height:auto;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -103,7 +103,7 @@ body {
 }
 .btn:active { transform: translateY(1px) scale(.998); }
 .btn.ghost { background: transparent; color:var(--muted); border:1px solid rgba(16,24,40,0.04); padding:8px 10px; }
-.btn.primary { background: linear-gradient(90deg,var(--accent-1),var(--accent-4)); color: #062; color: #071133; color: #fff; box-shadow: 0 8px 22px rgba(100,100,200,0.08); }
+.btn.primary { background: linear-gradient(90deg,var(--accent-1),var(--accent-4)); color: #fff; box-shadow: 0 8px 22px rgba(100,100,200,0.08); }
 
 /* ========== Layout ========== */
 .layout {
@@ -195,7 +195,7 @@ body {
 }
 .overlay canvas { width:100%; height:100%; position:absolute; left:0; top:0; }
 
-/* Join overlay (same id kept) */
+/* Join overlay */
 .lock-screen {
   position:absolute;
   inset:18px;
@@ -230,9 +230,18 @@ body {
   color: #fff;
   cursor:pointer;
   z-index:60;
+  opacity:0;
+  pointer-events:none;
+  transition: opacity var(--transition);
 }
 
-/* ===== Responsive: collapsible sidebar behavior ===== */
+/* 👇 show only when user has joined (you’ll toggle body.joined in JS) */
+body.joined .floating-toggle {
+  opacity:1;
+  pointer-events:auto;
+}
+
+/* ===== Responsive (mobile) ===== */
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; gap:12px; padding-bottom:100px; }
 
@@ -254,16 +263,35 @@ body {
     opacity:1;
   }
 
-  .floating-toggle { display:block; }
+  .floating-toggle {
+    display:block;
+    bottom:24px;
+    right:18px;
+  }
 
-  .topbar { padding-right:56px; }
-  .room .input { min-width: 120px; max-width: 160px; }
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 60px;
+    padding-right: 14px;
+  }
+
+  .room {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+  }
+  .room input,
+  .room button {
+    width: 100%;
+  }
 
   .canvas-wrap { padding:12px; }
   .panel.small { display:none; }
 }
 
-/* Desktop: keep sidebar visible but slightly elevated */
+/* Desktop */
 @media (min-width: 769px) {
   .sidebar { position:relative; transform:none; opacity:1; }
   .floating-toggle { display:none; }

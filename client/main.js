@@ -104,6 +104,8 @@ ws.on("joined", ({ user, users: initialUsers, ops }) => {
   overlay.style.pointerEvents = "none";
   joinOverlay.classList.add("hidden");
 
+  document.body.classList.add("joined");
+
   // ✅ clear all old cursors when joining new room
   renderer.cursors.clear();
 
